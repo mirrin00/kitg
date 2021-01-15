@@ -272,7 +272,7 @@ if __name__ == "__main__":
             break
         elif s == 'dij':
             print("\nDijkstra algorithm")
-            start = input("Enter start node").split(' ')
+            start = input("Enter start node ").split(' ')[0]
             dijkstra(graph, start)
             break
         elif s == 'fl':
