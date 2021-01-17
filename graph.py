@@ -1,5 +1,5 @@
 import json
-from node import Node
+from vertex import Vertex
 
 class GraphError(BaseException):
     pass
@@ -7,44 +7,44 @@ class GraphError(BaseException):
 class Graph:
 
     def __init__(self):
-        self.nodes = {}
+        self.vertices = {}
         self.is_oriented = False
 
-    def addRib(self, rib, is_oriented, weight = 1):
-        node_start = self.nodes.get(rib[0])
-        node_end = self.nodes.get(rib[1])
-        if node_start == None:
-            raise GraphError(f"No node {rib[0]} in graph")
-        if node_end == None:
-            raise GraphError(f"No node {rib[1]} in graph")
+    def addEdge(self, edge, is_oriented, weight = 1):
+        vertex_start = self.vertices.get(edge[0])
+        vertex_end = self.vertices.get(edge[1])
+        if vertex_start == None:
+            raise GraphError(f"No vertex {edge[0]} in graph")
+        if vertex_end == None:
+            raise GraphError(f"No vertex {edge[1]} in graph")
         if self.is_oriented:
-            node_start.addRib(rib[1], weight)
+            vertex_start.addEdge(edge[1], weight)
         else:
-            node_start.addRib(rib[1], weight)
-            node_end.addRib(rib[0], weight)
+            vertex_start.addEdge(edge[1], weight)
+            vertex_end.addEdge(edge[0], weight)
 
     def loadFromJSON(self, file):
         with open(file, 'r') as f:
             data = json.load(f)
         self.is_oriented = data["oriented"]
-        for node in data["nodes"]:
-            self.nodes[node] = Node(node)
-        ribs = data["ribs"]
-        for key in ribs.keys():
-            for rib in ribs[key]:
-                if type(rib) == list:
-                    self.addRib((key, rib[0]), self.is_oriented, rib[1])
+        for vertex in data["vertices"]:
+            self.vertices[vertex] = Vertex(vertex)
+        edges = data["edges"]
+        for key in edges.keys():
+            for edge in edges[key]:
+                if type(edge) == list:
+                    self.addEdge((key, edge[0]), self.is_oriented, edge[1])
                 else:
-                    self.addRib((key, rib), self.is_oriented)
-        sort_nodes = {}
-        for key in sorted(self.nodes.keys()):
-            self.nodes[key].sort()
-            sort_nodes[key] = self.nodes[key]
-        self.nodes = sort_nodes
+                    self.addEdge((key, edge), self.is_oriented)
+        sort_vertices = {}
+        for key in sorted(self.vertices.keys()):
+            self.vertices[key].sort()
+            sort_vertices[key] = self.vertices[key]
+        self.vertices = sort_vertices
 
     def print(self):
         print("Graph:\nis_oriented", self.is_oriented)
-        print("nodes: ", self.nodes.keys())
-        print("ribs:")
-        for k in self.nodes.keys():
-            print(k,self.nodes[k])
+        print("vertices: ", self.vertices.keys())
+        print("edges:")
+        for k in self.vertices.keys():
+            print(k,self.vertices[k])

@@ -19,7 +19,7 @@ if __name__ == "__main__":
             break
         elif s == 'dij':
             print("\nDijkstra algorithm")
-            start = input("Enter start node ").split(' ')[0]
+            start = input("Enter start vertex ").split(' ')[0]
             algorithms.dijkstra(graph, start)
             break
         elif s == 'fl':
@@ -28,8 +28,8 @@ if __name__ == "__main__":
             break
         elif s == 'ford':
             print("\nFord-Fulkerson algorithm (Max Flow)")
-            nodes = input("Enter source and target through a space ").split(' ')
-            algorithms.max_flow(graph, nodes[0], nodes[1])
+            vertices = input("Enter source and target through a space ").split(' ')
+            algorithms.max_flow(graph, vertices[0], vertices[1])
             break
         else:
             print("Wrong enter!")

@@ -1,28 +1,28 @@
 import json
 
-class Node:
+class Vertex:
 
     def __init__(self, name):
         self.name = name
-        self.ribs = {}
+        self.edges = {}
 
-    def addRib(self, node, weight = 1):
-        self.ribs[node] = weight
+    def addEdge(self, vertex, weight = 1):
+        self.edges[vertex] = weight
 
-    def delRib(self, node):
-        self.ribs.pop(node, None)
+    def delEdge(self, vertex):
+        self.edges.pop(vertex, None)
 
-    def getRib(self, node, ret = None):
-        return self.ribs.get(node, ret)
+    def getEdge(self, vertex, ret = None):
+        return self.edges.get(vertex, ret)
 
     def sort(self):
-        sort_ribs = {}
-        for k in sorted(self.ribs.keys()):
-            sort_ribs[k] = self.ribs[k]
-        self.ribs = sort_ribs
+        sort_edges = {}
+        for k in sorted(self.edges.keys()):
+            sort_edges[k] = self.edges[k]
+        self.edges = sort_edges
 
     def __str__(self):
-        return str(self.ribs)
+        return str(self.edges)
 
 
 
@@ -32,93 +32,93 @@ class GraphError(BaseException):
 class Graph:
 
     def __init__(self):
-        self.nodes = {}
+        self.vertices = {}
         self.is_oriented = False
 
-    def addRib(self, rib, is_oriented, weight = 1):
-        node_start = self.nodes.get(rib[0])
-        node_end = self.nodes.get(rib[1])
-        if node_start == None:
-            raise GraphError(f"No node {rib[0]} in graph")
-        if node_end == None:
-            raise GraphError(f"No node {rib[1]} in graph")
+    def addEdge(self, edge, is_oriented, weight = 1):
+        vertex_start = self.vertices.get(edge[0])
+        vertex_end = self.vertices.get(edge[1])
+        if vertex_start == None:
+            raise GraphError(f"No vertex {edge[0]} in graph")
+        if vertex_end == None:
+            raise GraphError(f"No vertex {edge[1]} in graph")
         if self.is_oriented:
-            node_start.addRib(rib[1], weight)
+            vertex_start.addEdge(edge[1], weight)
         else:
-            node_start.addRib(rib[1], weight)
-            node_end.addRib(rib[0], weight)
+            vertex_start.addEdge(edge[1], weight)
+            vertex_end.addEdge(edge[0], weight)
 
     def loadFromJSON(self, file):
         with open(file, 'r') as f:
             data = json.load(f)
         self.is_oriented = data["oriented"]
-        for node in data["nodes"]:
-            self.nodes[node] = Node(node)
-        ribs = data["ribs"]
-        for key in ribs.keys():
-            for rib in ribs[key]:
-                if type(rib) == list:
-                    self.addRib((key, rib[0]), self.is_oriented, rib[1])
+        for vertex in data["vertices"]:
+            self.vertices[vertex] = Vertex(vertex)
+        edges = data["edges"]
+        for key in edges.keys():
+            for edge in edges[key]:
+                if type(edge) == list:
+                    self.addEdge((key, edge[0]), self.is_oriented, edge[1])
                 else:
-                    self.addRib((key, rib), self.is_oriented)
-        sort_nodes = {}
-        for key in sorted(self.nodes.keys()):
-            self.nodes[key].sort()
-            sort_nodes[key] = self.nodes[key]
-        self.nodes = sort_nodes
+                    self.addEdge((key, edge), self.is_oriented)
+        sort_vertices = {}
+        for key in sorted(self.vertices.keys()):
+            self.vertices[key].sort()
+            sort_vertices[key] = self.vertices[key]
+        self.vertices = sort_vertices
 
     def print(self):
         print("Graph:\nis_oriented", self.is_oriented)
-        print("nodes: ", self.nodes.keys())
-        print("ribs:")
-        for k in self.nodes.keys():
-            print(k,self.nodes[k])
+        print("vertices: ", self.vertices.keys())
+        print("edges:")
+        for k in self.vertices.keys():
+            print(k,self.vertices[k])
 
 def kosaraju_sharir(graph):
     if graph.is_oriented == False:
         raise GraphError("Algorithm Kosaraju: Graph is not oriented")
     times = {}
     time = 0
-    def find(node_name, times, time):
-        times[node_name] = -1
+    def find(vertex_name, times, time):
+        times[vertex_name] = -1
         time += 1
-        for node in graph.nodes[node_name].ribs.keys():
-            if node in times.keys():
+        for vertex in graph.vertices[vertex_name].edges.keys():
+            if vertex in times.keys():
                 continue
-            time = find(node, times, time)
+            time = find(vertex, times, time)
         time += 1
-        times[node_name] = time
+        times[vertex_name] = time
         return time
-    for node in sorted(graph.nodes.keys()):
-        if node not in times.keys():
-            time = find(node, times, time)
+    for vertex in sorted(graph.vertices.keys()):
+        if vertex not in times.keys():
+            time = find(vertex, times, time)
     times = {k: v for k, v in sorted(times.items(), key=lambda item: item[1], reverse=True)}
-    def find_components(node_name, comp, times):
-        times[node_name] = -1
-        comp.append(node_name)
-        for node in times.keys():
-            if times[node] != -1 and node_name in graph.nodes[node].ribs.keys():
-                find_components(node, comp, times)
+    def find_components(vertex_name, comp, times):
+        times[vertex_name] = -1
+        comp.append(vertex_name)
+        for vertex in times.keys():
+            if times[vertex] != -1 and vertex_name in graph.vertices[vertex].edges.keys():
+                find_components(vertex, comp, times)
     components = []
-    for node in times.keys():
-        if times[node] != -1:
+    for vertex in times.keys():
+        if times[vertex] != -1:
             component = []
-            find_components(node, component, times)
+            find_components(vertex, component, times)
             components.append(component)
     print("Result Kosaraju:")
     for comp in kosaraju(graph):
         print(comp)
 
-def dijkstra(graph, start_node_name):
-    for k in graph.nodes.keys():
-        for r, v in graph.nodes[k].ribs.items():
+def dijkstra(graph, start_vertex_name):
+    for k in graph.vertices.keys():
+        for r, v in graph.vertices[k].edges.items():
             if v < 0:
-                raise GraphError(f"Algorithm Dijsktra: Graph has negative rib")
-    if start_node_name not in graph.nodes.keys():
-        raise GraphError(f"Algorithm Dijsktra: Node {start_node_name} not in graph")
-    start_node = graph.nodes[start_node_name]
-    paths = {k: [start_node.getRib(k, -1), start_node_name] for k in sorted(graph.nodes.keys())}
-    paths.pop(start_node_name)
+                raise GraphError(f"Algorithm Dijsktra: Graph has negative edge")
+    if start_vertex_name not in graph.vertices.keys():
+        raise GraphError(f"Algorithm Dijsktra: Vertex {start_vertex_name} not in graph")
+    start_vertex = graph.vertices[start_vertex_name]
+    paths = {k: [start_vertex.getEdge(k, -1), start_vertex_name] for k in sorted(graph.vertices.keys())}
+    paths.pop(start_vertex_name)
     for k in paths.keys():
         print(f"  {k}  ",end='|')
     print()
@@ -130,17 +130,17 @@ def dijkstra(graph, start_node_name):
     print()
     while True:
         minimum = -1
-        node = ''
-        for node_name, path in paths.items():
+        vertex = ''
+        for vertex_name, path in paths.items():
             if path[0] != None and (path[0] < minimum or minimum == -1) and path[0] != -1:
                 minimum = path[0]
-                node = node_name
+                vertex = vertex_name
         if minimum == -1:
             break
-        for node_name, len_node in graph.nodes[node].ribs.items():
-            if node_name != start_node_name and paths[node_name][0] != None and (paths[node_name][0] > (minimum + len_node) or paths[node_name][0] == -1):
-                paths[node_name] = [minimum + len_node, node]
-        paths[node][0] = None
+        for vertex_name, len_vertex in graph.vertices[vertex].edges.items():
+            if vertex_name != start_vertex_name and paths[vertex_name][0] != None and (paths[vertex_name][0] > (minimum + len_vertex) or paths[vertex_name][0] == -1):
+                paths[vertex_name] = [minimum + len_vertex, vertex]
+        paths[vertex][0] = None
         for v in paths.values():
             if v[0] == -1:
                 print(" inf ", end='|')
@@ -153,15 +153,15 @@ def dijkstra(graph, start_node_name):
 
 def floyd(graph):
     tabl = []
-    keys = graph.nodes.keys()
+    keys = graph.vertices.keys()
     for k in keys:
         row = []
-        node = graph.nodes[k]
+        vertex = graph.vertices[k]
         for col in keys:
             if k == col:
                 row.append(0)
             else:
-                row.append(node.getRib(col))
+                row.append(vertex.getEdge(col))
         tabl.append(row)
     def print_tabl(tabl, keys, index):
         print("     ", end='|')
@@ -203,28 +203,28 @@ def floyd(graph):
 
 def max_flow(graph, source, target):
     flow = {}
-    if source not in graph.nodes.keys():
-        raise GraphError(f"Algorithm Max Flow: No node {source} in graph")
-    if target not in graph.nodes.keys():
-        raise GraphError(f"Algorithm Max Flow: No node {target} in graph")
-    for k in graph.nodes.keys():
-        for r, v in graph.nodes[k].ribs.items():
+    if source not in graph.vertices.keys():
+        raise GraphError(f"Algorithm Max Flow: No vertex {source} in graph")
+    if target not in graph.vertices.keys():
+        raise GraphError(f"Algorithm Max Flow: No vertex {target} in graph")
+    for k in graph.vertices.keys():
+        for r, v in graph.vertices[k].edges.items():
             if v < 0:
-                raise GraphError(f"Algorithm Max Flow: Graph has negative rib")
+                raise GraphError(f"Algorithm Max Flow: Graph has negative edge")
             flow[(k,r)] = 0
     while True:
         labels = {source: None}
         checked = [source]
-        not_checked = list(graph.nodes.keys())
+        not_checked = list(graph.vertices.keys())
         not_checked.remove(source)
-        for node_checked in checked:
+        for vertex_checked in checked:
             temp_checked = []
-            for node in not_checked:
-                if node in temp_checked:
+            for vertex in not_checked:
+                if vertex in temp_checked:
                     continue
-                if flow.get((node_checked, node), 0) < graph.nodes[node_checked].getRib(node, 0) or flow.get((node, node_checked), 0) > 0:
-                    temp_checked.append(node)
-                    labels[node] = node_checked
+                if flow.get((vertex_checked, vertex), 0) < graph.vertices[vertex_checked].getEdge(vertex, 0) or flow.get((vertex, vertex_checked), 0) > 0:
+                    temp_checked.append(vertex)
+                    labels[vertex] = vertex_checked
             checked.extend(temp_checked)
             for el in temp_checked:
                 not_checked.remove(el)
@@ -232,31 +232,31 @@ def max_flow(graph, source, target):
             break
         else:
             mins = []
-            node = target
-            while node != source:
-                prev_node = labels[node]
-                if graph.nodes[prev_node].getRib(node, 0) - flow.get((prev_node, node), 0) > 0:
-                    mins.append(graph.nodes[prev_node].getRib(node, 0) - flow.get((prev_node, node), 0))
-                elif flow.get((node,prev_node),0) > 0:
-                    mins.append(flow.get((node,prev_node),0))
-                node = prev_node
+            vertex = target
+            while vertex != source:
+                prev_vertex = labels[vertex]
+                if graph.vertices[prev_vertex].getEdge(vertex, 0) - flow.get((prev_vertex, vertex), 0) > 0:
+                    mins.append(graph.vertices[prev_vertex].getEdge(vertex, 0) - flow.get((prev_vertex, vertex), 0))
+                elif flow.get((vertex,prev_vertex),0) > 0:
+                    mins.append(flow.get((vertex,prev_vertex),0))
+                vertex = prev_vertex
             mins = min(mins)
-            node = target
-            while node != source:
-                prev_node = labels[node]
-                if graph.nodes[prev_node].getRib(node, 0) - flow.get((prev_node, node), 0) > 0:
-                    flow[(prev_node, node)] += mins
-                elif flow.get((node, prev_node), 0) > 0:
-                    flow[(node,prev_node)] -= mins
-                node = prev_node
+            vertex = target
+            while vertex != source:
+                prev_vertex = labels[vertex]
+                if graph.vertices[prev_vertex].getEdge(vertex, 0) - flow.get((prev_vertex, vertex), 0) > 0:
+                    flow[(prev_vertex, vertex)] += mins
+                elif flow.get((vertex, prev_vertex), 0) > 0:
+                    flow[(vertex,prev_vertex)] -= mins
+                vertex = prev_vertex
     max_flow = 0
-    for node, weight in graph.nodes[source].ribs.items():
-        max_flow += flow.get((source,node), 0)
+    for vertex, weight in graph.vertices[source].edges.items():
+        max_flow += flow.get((source,vertex), 0)
     print("Max Flow:", max_flow)
 
 if __name__ == "__main__":
     graph = Graph()
-    graph.loadFromJSON("graph.json")
+    graph.loadFromJSON("../graph.json")
     print("You have entered the following graph")
     graph.print()
     while True:
@@ -272,7 +272,7 @@ if __name__ == "__main__":
             break
         elif s == 'dij':
             print("\nDijkstra algorithm")
-            start = input("Enter start node ").split(' ')[0]
+            start = input("Enter start vertex ").split(' ')[0]
             dijkstra(graph, start)
             break
         elif s == 'fl':
@@ -281,8 +281,8 @@ if __name__ == "__main__":
             break
         elif s == 'ford':
             print("\nFord-Fulkerson algorithm (Max Flow)")
-            nodes = input("Enter source and target through a space ").split(' ')
-            max_flow(graph, nodes[0], nodes[1])
+            vertices = input("Enter source and target through a space ").split(' ')
+            max_flow(graph, vertices[0], vertices[1])
             break
         else:
             print("Wrong enter!")
