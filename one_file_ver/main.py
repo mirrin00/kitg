@@ -106,7 +106,7 @@ def kosaraju_sharir(graph):
             find_components(vertex, component, times)
             components.append(component)
     print("Result Kosaraju:")
-    for comp in kosaraju(graph):
+    for comp in components:
         print(comp)
 
 def dijkstra(graph, start_vertex_name):
@@ -256,7 +256,7 @@ def max_flow(graph, source, target):
 
 if __name__ == "__main__":
     graph = Graph()
-    graph.loadFromJSON("../graph.json")
+    graph.loadFromJSON("graph.json")
     print("You have entered the following graph")
     graph.print()
     while True:

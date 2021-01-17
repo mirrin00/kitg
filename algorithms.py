@@ -32,7 +32,7 @@ def kosaraju_sharir(graph):
             find_components(vertex, component, times)
             components.append(component)
     print("Result Kosaraju:")
-    for comp in kosaraju(graph):
+    for comp in components:
         print(comp)
 
 def dijkstra(graph, start_vertex_name):
@@ -41,7 +41,7 @@ def dijkstra(graph, start_vertex_name):
             if v < 0:
                 raise GraphError(f"Algorithm Dijsktra: Graph has negative edge")
     if start_vertex_name not in graph.vertices.keys():
-        raise GraphError(f"Algorithm Dijsktra: Node {start_vertex_name} not in graph")
+        raise GraphError(f"Algorithm Dijsktra: Vertex {start_vertex_name} not in graph")
     start_vertex = graph.vertices[start_vertex_name]
     paths = {k: [start_vertex.getEdge(k, -1), start_vertex_name] for k in sorted(graph.vertices.keys())}
     paths.pop(start_vertex_name)
