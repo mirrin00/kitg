@@ -1,7 +1,7 @@
 {
   "oriented": true,
-  "nodes": ["A", "B", "C", "D", "E"],
-  "ribs": {
+  "vertices": ["A", "B", "C", "D", "E"],
+  "edges": {
     "A": [],
     "B": [],
     "C": [],
