@@ -9,6 +9,8 @@ if __name__ == "__main__":
     while True:
         print("Choose algorithm:")
         print("kos - Kosaraju-Sharir algorithm")
+        print("pru - Prufer algorithm")
+        print("kru - Kruskal algorithm")
         print("dij - Dijkstra algorithm")
         print("fl - Floyd algorithm")
         print("ford - Ford-Fulkerson algorithm (Max Flow)")
@@ -16,6 +18,24 @@ if __name__ == "__main__":
         if s == 'kos':
             print("\nKosaraju algorithm")
             algorithms.kosaraju_sharir(graph)
+            break
+        if s == 'pru':
+            print("\nPrufer algorithm")
+            print("to - create code from graph")
+            print("from - create graph from code")
+            s = input().split(' ')[0]
+            if s == 'to':
+                algorithms.prufer(graph)
+            elif s == 'from':
+                print('Enter code through a space')
+                s = input().split(' ')
+                algorithms.prufer(graph, False, s)
+            else:
+                print('Wrong input')
+            break
+        if s == 'kru':
+            print("\nKruskal algorithm")
+            algorithms.kruskal(graph)
             break
         elif s == 'dij':
             print("\nDijkstra algorithm")

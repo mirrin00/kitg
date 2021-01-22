@@ -24,8 +24,6 @@ class Vertex:
     def __str__(self):
         return str(self.edges)
 
-
-
 class GraphError(BaseException):
     pass
 
@@ -35,7 +33,7 @@ class Graph:
         self.vertices = {}
         self.is_oriented = False
 
-    def addEdge(self, edge, is_oriented, weight = 1):
+    def addEdge(self, edge, weight = 1):
         vertex_start = self.vertices.get(edge[0])
         vertex_end = self.vertices.get(edge[1])
         if vertex_start == None:
@@ -48,6 +46,31 @@ class Graph:
             vertex_start.addEdge(edge[1], weight)
             vertex_end.addEdge(edge[0], weight)
 
+    def removeEdge(self, edge):
+        vertex_start = self.vertices.get(edge[0])
+        vertex_end = self.vertices.get(edge[1])
+        if vertex_start == None:
+            raise GraphError(f"No vertex {edge[0]} in graph")
+        if vertex_end == None:
+            raise GraphError(f"No vertex {edge[1]} in graph")
+        if self.is_oriented:
+            self.vertices[vertex_start].edges.pop(vertex_end, None)
+        else:
+            self.vertices[vertex_start].edges.pop(vertex_end, None)
+            self.vertices[vertex_end].edges.pop(vertex_start, None)
+
+    def removeVertex(self, vertex):
+        if vertex not in self.vertices.keys():
+            raise GraphError(f'No vertex {vertex} in graph')
+        self.vertices.pop(vertex, None)
+        for v in self.vertices.values():
+            v.edges.pop(vertex, None)
+
+    def clearEdges(self):
+        for vertex in self.vertices.values():
+            vertex.edges.clear()
+
+
     def loadFromJSON(self, file):
         with open(file, 'r') as f:
             data = json.load(f)
@@ -58,9 +81,9 @@ class Graph:
         for key in edges.keys():
             for edge in edges[key]:
                 if type(edge) == list:
-                    self.addEdge((key, edge[0]), self.is_oriented, edge[1])
+                    self.addEdge((key, edge[0]), edge[1])
                 else:
-                    self.addEdge((key, edge), self.is_oriented)
+                    self.addEdge((key, edge))
         sort_vertices = {}
         for key in sorted(self.vertices.keys()):
             self.vertices[key].sort()
@@ -241,6 +264,7 @@ def max_flow(graph, source, target):
                     mins.append(flow.get((vertex,prev_vertex),0))
                 vertex = prev_vertex
             mins = min(mins)
+            cur_way = [target]
             vertex = target
             while vertex != source:
                 prev_vertex = labels[vertex]
@@ -249,19 +273,87 @@ def max_flow(graph, source, target):
                 elif flow.get((vertex, prev_vertex), 0) > 0:
                     flow[(vertex,prev_vertex)] -= mins
                 vertex = prev_vertex
+                cur_way.append(prev_vertex)
+            print("Path: ", end='')
+            for v in reversed(cur_way):
+                print(v, end=' ')
+            print('Flow:', mins)
     max_flow = 0
     for vertex, weight in graph.vertices[source].edges.items():
         max_flow += flow.get((source,vertex), 0)
     print("Max Flow:", max_flow)
 
+def kruskal(graph):
+    edges = {}
+    colors = {}
+    for i, k in enumerate(graph.vertices.keys()):
+        colors[k] = i + 1
+        for r, v in graph.vertices[k].edges.items():
+            if (r,k) not in edges.keys():
+                edges[(k,r)] = v
+    edges = {edge: weight for edge, weight in sorted(edges.items(), key=lambda x: x[1])}
+    weight_of_mst = 0
+    for k in colors.keys():
+        print(f'  {k}  ', end='|')
+    print()
+    for v in colors.values():
+        print(f' {v:3} ', end='|')
+    print()
+    for edge, weight in edges.items():
+        if colors[edge[0]] != colors[edge[1]]:
+            weight_of_mst += weight
+            old, new = min(colors[edge[0]], colors[edge[1]]), max(colors[edge[0]], colors[edge[1]])
+            for v, k in colors.items():
+                if k == old:
+                    colors[v] = new
+            for v in colors.values():
+                print(f' {v:3} ', end='|')
+            print(" Edge", edge, "=", weight)
+        if list(colors.values()).count(list(colors.values())[0]) == len(colors.values()):
+            break
+    print("Minimum weight spanning tree:", weight_of_mst)
+
+def prufer(graph, toCode = True, code = []):
+    if toCode:
+        if graph.is_oriented == True:
+            raise GraphError("Algorithm Kosaraju: Graph is oriented")
+        code = []
+        while len(graph.vertices) > 2:
+            for v in sorted(graph.vertices.keys(), key=lambda x: int(x)):
+                if len(graph.vertices[v].edges) == 1:
+                    print(f"Delete vertex {v}")
+                    code.append(list(graph.vertices[v].edges.keys())[0])
+                    graph.removeVertex(v)
+                    break
+        print('Code: ', end='')
+        for c in code:
+            print(c,end=' ')
+        print()
+    else:
+        graph.clearEdges()
+        vertices = sorted(list(graph.vertices.keys()), key=lambda x: int(x))
+        while len(code) > 0:
+            for vertex in vertices:
+                if vertex not in code:
+                    print('Add edge',(vertex, code[0]))
+                    graph.addEdge((vertex, code[0]))
+                    code.pop(0)
+                    vertices.remove(vertex)
+                    break
+        print('Add edge', (vertices[0], vertices[1]))
+        graph.addEdge((vertices[0], vertices[1]))
+        graph.print()
+
 if __name__ == "__main__":
     graph = Graph()
-    graph.loadFromJSON("graph.json")
+    graph.loadFromJSON("../graph.json")
     print("You have entered the following graph")
     graph.print()
     while True:
         print("Choose algorithm:")
         print("kos - Kosaraju-Sharir algorithm")
+        print("pru - Prufer algorithm")
+        print("kru - Kruskal algorithm")
         print("dij - Dijkstra algorithm")
         print("fl - Floyd algorithm")
         print("ford - Ford-Fulkerson algorithm (Max Flow)")
@@ -269,6 +361,24 @@ if __name__ == "__main__":
         if s == 'kos':
             print("\nKosaraju algorithm")
             kosaraju_sharir(graph)
+            break
+        if s == 'pru':
+            print("\nPrufer algorithm")
+            print("to - create code from graph")
+            print("from - create graph from code")
+            s = input().split(' ')[0]
+            if s == 'to':
+                prufer(graph)
+            elif s == 'from':
+                print('Enter code through a space')
+                s = input().split(' ')
+                prufer(graph, False, s)
+            else:
+                print('Wrong input')
+            break
+        if s == 'kru':
+            print("\nKruskal algorithm")
+            kruskal(graph)
             break
         elif s == 'dij':
             print("\nDijkstra algorithm")
@@ -286,5 +396,3 @@ if __name__ == "__main__":
             break
         else:
             print("Wrong enter!")
-
-

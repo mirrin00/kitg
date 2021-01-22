@@ -167,6 +167,7 @@ def max_flow(graph, source, target):
                     mins.append(flow.get((vertex,prev_vertex),0))
                 vertex = prev_vertex
             mins = min(mins)
+            cur_way = [target]
             vertex = target
             while vertex != source:
                 prev_vertex = labels[vertex]
@@ -175,8 +176,73 @@ def max_flow(graph, source, target):
                 elif flow.get((vertex, prev_vertex), 0) > 0:
                     flow[(vertex,prev_vertex)] -= mins
                 vertex = prev_vertex
+                cur_way.append(prev_vertex)
+            print("Path: ", end='')
+            for v in reversed(cur_way):
+                print(v, end=' ')
+            print('Flow:', mins)
     max_flow = 0
     for vertex, weight in graph.vertices[source].edges.items():
         max_flow += flow.get((source,vertex), 0)
     print("Max Flow:", max_flow)
 
+def kruskal(graph):
+    edges = {}
+    colors = {}
+    for i, k in enumerate(graph.vertices.keys()):
+        colors[k] = i + 1
+        for r, v in graph.vertices[k].edges.items():
+            if (r,k) not in edges.keys():
+                edges[(k,r)] = v
+    edges = {edge: weight for edge, weight in sorted(edges.items(), key=lambda x: x[1])}
+    weight_of_mst = 0
+    for k in colors.keys():
+        print(f'  {k}  ', end='|')
+    print()
+    for v in colors.values():
+        print(f' {v:3} ', end='|')
+    print()
+    for edge, weight in edges.items():
+        if colors[edge[0]] != colors[edge[1]]:
+            weight_of_mst += weight
+            old, new = min(colors[edge[0]], colors[edge[1]]), max(colors[edge[0]], colors[edge[1]])
+            for v, k in colors.items():
+                if k == old:
+                    colors[v] = new
+            for v in colors.values():
+                print(f' {v:3} ', end='|')
+            print(" Edge", edge, "=", weight)
+        if list(colors.values()).count(list(colors.values())[0]) == len(colors.values()):
+            break
+    print("Minimum weight spanning tree:", weight_of_mst)
+
+def prufer(graph, toCode = True, code = []):
+    if toCode:
+        if graph.is_oriented == True:
+            raise GraphError("Algorithm Kosaraju: Graph is oriented")
+        code = []
+        while len(graph.vertices) > 2:
+            for v in sorted(graph.vertices.keys(), key=lambda x: int(x)):
+                if len(graph.vertices[v].edges) == 1:
+                    print(f"Delete vertex {v}")
+                    code.append(list(graph.vertices[v].edges.keys())[0])
+                    graph.removeVertex(v)
+                    break
+        print('Code: ', end='')
+        for c in code:
+            print(c,end=' ')
+        print()
+    else:
+        graph.clearEdges()
+        vertices = sorted(list(graph.vertices.keys()), key=lambda x: int(x))
+        while len(code) > 0:
+            for vertex in vertices:
+                if vertex not in code:
+                    print('Add edge',(vertex, code[0]))
+                    graph.addEdge((vertex, code[0]))
+                    code.pop(0)
+                    vertices.remove(vertex)
+                    break
+        print('Add edge', (vertices[0], vertices[1]))
+        graph.addEdge((vertices[0], vertices[1]))
+        graph.print()
